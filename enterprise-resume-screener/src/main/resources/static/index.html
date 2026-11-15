@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Screener - Bias-Aware Hiring</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f9fafb;
+            --panel: #ffffff;
+            --border: #eaecf0;
+            --text: #101828;
+            --muted: #667085;
+            --blue: #155eef;
+            --blue-hover: #004eeb;
+            --blue-soft: #eff4ff;
+            --good-soft: #ecfdf3;
+            --bad-soft: #fef3f2;
+            --radius: 12px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .hidden { display: none !important; }
+
+        /* ---------- Auth ---------- */
+        .auth-wrap {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 400px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 24px;
+        }
+
+        .brand-dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: var(--blue);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .auth-card h1 { margin: 0 0 4px; font-size: 22px; }
+        .auth-card .sub { margin: 0 0 20px; color: var(--muted); }
+
+        .field { margin-bottom: 16px; }
+
+        label.lbl {
+            display: block;
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        input[type="email"], input[type="password"], input[type="text"], textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d0d5dd;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            color: var(--text);
+            background: #fff;
+        }
+
+        input:focus, textarea:focus {
+            outline: 2px solid var(--blue-soft);
+            border-color: var(--blue);
+        }
+
+        textarea { min-height: 170px; resize: vertical; }
+
+        .btn {
+            width: 100%;
+            padding: 11px 14px;
+            background: var(--blue);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .btn:hover:not(:disabled) { background: var(--blue-hover); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid var(--border);
+            width: auto;
+            padding: 7px 12px;
+        }
+        .btn-ghost:hover:not(:disabled) { background: var(--bg); }
+
+        .switch-link {
+            margin-top: 16px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .switch-link a {
+            color: var(--blue);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .msg {
+            display: none;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+        .msg.error { display: block; background: var(--bad-soft); color: #b42318; border: 1px solid #fecdca; }
+        .msg.success { display: block; background: var(--good-soft); color: #027a48; border: 1px solid #abefc6; }
+
+        /* ---------- App ---------- */
+        .topbar {
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .topbar .brand { margin: 0; }
+
+        .user-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .page {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 28px 24px 60px;
+        }
+
+        .page-head h1 { margin: 0; font-size: 22px; }
+        .page-head p { margin: 4px 0 20px; color: var(--muted); }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            .layout { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+        }
+
+        .dropzone {
+            display: block;
+            border: 2px dashed #d0d5dd;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            transition: border-color 0.15s, background 0.15s;
+        }
+
+        .dropzone:hover, .dropzone.dragover {
+            border-color: var(--blue);
+            background: var(--blue-soft);
+        }
+
+        .dropzone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .dropzone .fname {
+            margin-top: 6px;
+            font-weight: 600;
+            color: var(--blue);
+            word-break: break-all;
+        }
+
+        .hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
+
+        .empty, .loading {
+            text-align: center;
+            color: var(--muted);
+            padding: 60px 20px;
+        }
+
+        .spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid var(--border);
+            border-top-color: var(--blue);
+            border-radius: 50%;
+            margin: 0 auto 12px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .score-row {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .gauge { position: relative; width: 120px; height: 120px; flex-shrink: 0; }
+        .gauge svg { transform: rotate(-90deg); }
+        .gauge .track { stroke: var(--border); }
+        .gauge .fill { transition: stroke-dashoffset 0.8s ease; }
+        .gauge .number {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        .eyebrow {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .verdict { font-size: 20px; font-weight: 700; margin: 2px 0 8px; }
+
+        .subscores { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .pill {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 3px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .section { margin-bottom: 20px; }
+        .section h3 {
+            margin: 0 0 10px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+        }
+
+        .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+        .chip {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .chip.matched { background: var(--good-soft); color: #027a48; border: 1px solid #abefc6; }
+        .chip.missing { background: var(--bad-soft); color: #b42318; border: 1px solid #fecdca; }
+
+        .feedback {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--blue);
+            border-radius: 8px;
+            padding: 14px 16px;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 28px 0;
+        }
+
+        .block-title {
+            margin: 0 0 14px;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .banner {
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+        .banner.fair { background: var(--good-soft); color: #027a48; border: 1px solid #abefc6; }
+        .banner.flagged { background: var(--bad-soft); color: #b42318; border: 1px solid #fecdca; }
+        .banner .detail { font-weight: 400; margin-top: 4px; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+        th {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muted);
+            background: var(--bg);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .spinner { animation: none; }
+            .gauge .fill { transition: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ================= AUTH SCREENS ================= -->
+<div class="auth-wrap" id="authWrap">
+    <div class="auth-card">
+        <div class="brand"><div class="brand-dot">R</div> Resume Screener</div>
+        <div class="msg" id="authMsg"></div>
+
+        <form id="loginView">
+            <h1>Welcome back</h1>
+            <p class="sub">Log in to screen resumes.</p>
+            <div class="field">
+                <label class="lbl" for="loginEmail">Email</label>
+                <input type="email" id="loginEmail" required placeholder="you@example.com">
+            </div>
+            <div class="field">
+                <label class="lbl" for="loginPassword">Password</label>
+                <input type="password" id="loginPassword" required placeholder="Your password">
+            </div>
+            <button class="btn" type="submit" id="loginBtn">Log in</button>
+            <div class="switch-link">New here? <a id="toSignup">Create an account</a></div>
+        </form>
+
+        <form id="signupView" class="hidden">
+            <h1>Create account</h1>
+            <p class="sub">We will email you a 6-digit code to verify.</p>
+            <div class="field">
+                <label class="lbl" for="signupEmail">Email</label>
+                <input type="email" id="signupEmail" required placeholder="you@example.com">
+            </div>
+            <div class="field">
+                <label class="lbl" for="signupPassword">Password</label>
+                <input type="password" id="signupPassword" required placeholder="Choose a password">
+            </div>
+            <button class="btn" type="submit" id="signupBtn">Sign up</button>
+            <div class="switch-link">Already have an account? <a id="toLogin1">Log in</a></div>
+        </form>
+
+        <form id="otpView" class="hidden">
+            <h1>Verify your email</h1>
+            <p class="sub" id="otpSub">Enter the code we sent to your email.</p>
+            <div class="field">
+                <label class="lbl" for="otpInput">6-digit code</label>
+                <input type="text" id="otpInput" required maxlength="6" inputmode="numeric" placeholder="123456">
+            </div>
+            <button class="btn" type="submit" id="otpBtn">Verify</button>
+            <div class="switch-link"><a id="toLogin2">Back to log in</a></div>
+        </form>
+    </div>
+</div>
+
+<!-- ================= MAIN APP ================= -->
+<div id="appWrap" class="hidden">
+    <div class="topbar">
+        <div class="brand"><div class="brand-dot">R</div> Resume Screener</div>
+        <div class="user-box">
+            <span id="userEmail"></span>
+            <button class="btn btn-ghost" id="logoutBtn" type="button">Log out</button>
+        </div>
+    </div>
+
+    <div class="page">
+        <div class="page-head">
+            <h1>Resume screening</h1>
+            <p>Upload a resume and a job description. You get the match score and a bias check together.</p>
+        </div>
+
+        <div class="layout">
+            <!-- LEFT: one form -->
+            <form class="card" id="analyzeForm">
+                <div class="field">
+                    <label class="lbl">Resume</label>
+                    <label class="dropzone" id="dropzone" for="resumeFile">
+                        <div id="dropText">Click or drag a file here</div>
+                        <div class="fname" id="fileName"></div>
+                        <input type="file" id="resumeFile" accept=".pdf,.doc,.docx">
+                    </label>
+                    <div class="hint">PDF, DOC or DOCX.</div>
+                </div>
+
+                <div class="field">
+                    <label class="lbl" for="jobDescription">Job description</label>
+                    <textarea id="jobDescription" placeholder="Paste the complete job posting here..."></textarea>
+                    <div class="hint">At least 50 characters.</div>
+                </div>
+
+                <div class="msg" id="formMsg"></div>
+                <button class="btn" type="submit" id="submitBtn">Analyze Resume</button>
+            </form>
+
+            <!-- RIGHT: results -->
+            <div class="card">
+                <div class="empty" id="emptyState">Results will appear here.</div>
+
+                <div class="loading hidden" id="loadingState">
+                    <div class="spinner"></div>
+                    AI is analyzing the resume and checking for bias. This can take up to a minute...
+                </div>
+
+                <div class="hidden" id="resultsWrap">
+                    <!-- Match score -->
+                    <div class="score-row">
+                        <div class="gauge">
+                            <svg width="120" height="120" viewBox="0 0 120 120">
+                                <circle class="track" cx="60" cy="60" r="50" fill="none" stroke-width="10"/>
+                                <circle class="fill" id="gaugeFill" cx="60" cy="60" r="50" fill="none" stroke-width="10"
+                                        stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314"/>
+                            </svg>
+                            <div class="number" id="scoreNumber">0%</div>
+                        </div>
+                        <div>
+                            <div class="eyebrow">Final match score</div>
+                            <div class="verdict" id="verdict">-</div>
+                            <div class="subscores">
+                                <span class="pill" id="ruleScore">Rule-based: -</span>
+                                <span class="pill" id="aiScore">AI: -</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h3>Matched skills</h3>
+                        <div class="chips" id="matchedChips"></div>
+                    </div>
+                    <div class="section">
+                        <h3>Missing skills</h3>
+                        <div class="chips" id="missingChips"></div>
+                    </div>
+                    <div class="feedback">
+                        <div class="eyebrow" style="margin-bottom:6px;">Feedback</div>
+                        <div id="feedbackText"></div>
+                    </div>
+
+                    <hr class="divider">
+
+                    <!-- Bias check -->
+                    <h2 class="block-title">Bias check</h2>
+                    <div id="biasContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const $ = (id) => document.getElementById(id);
+    const SESSION_KEY = 'rs_user';
+    // Names used automatically for the name check (change here if needed)
+    const BIAS_TEST_NAMES = 'Rahul Sharma, Priya Singh';
+    let pendingEmail = '';
+
+    /* ---------- helpers ---------- */
+    async function readResponse(res) {
+        const text = await res.text();
+        let data = null;
+        try { data = JSON.parse(text); } catch (e) { /* plain text */ }
+        return { ok: res.ok, text: text, data: data };
+    }
+
+    function errorFrom(r) {
+        if (r.data && r.data.error) return r.data.error;
+        return r.text || 'Something went wrong.';
+    }
+
+    function showMsg(el, type, text) { el.className = 'msg ' + type; el.textContent = text; }
+    function clearMsg(el) { el.className = 'msg'; el.textContent = ''; }
+
+    /* ---------- auth views ---------- */
+    function showAuthView(name) {
+        ['loginView', 'signupView', 'otpView'].forEach(v => $(v).classList.toggle('hidden', v !== name));
+        clearMsg($('authMsg'));
+    }
+
+    $('toSignup').onclick = () => showAuthView('signupView');
+    $('toLogin1').onclick = () => showAuthView('loginView');
+    $('toLogin2').onclick = () => showAuthView('loginView');
+
+    function showApp(email) {
+        $('authWrap').classList.add('hidden');
+        $('appWrap').classList.remove('hidden');
+        $('userEmail').textContent = email;
+    }
+
+    function showAuth() {
+        $('appWrap').classList.add('hidden');
+        $('authWrap').classList.remove('hidden');
+        showAuthView('loginView');
+    }
+
+    $('signupView').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = $('signupEmail').value.trim();
+        $('signupBtn').disabled = true;
+        try {
+            const res = await fetch('/api/auth/signup', {
+                method: 'POST',
+                body: new URLSearchParams({ email: email, password: $('signupPassword').value })
+            });
+            const r = await readResponse(res);
+            if (!r.ok) throw new Error(errorFrom(r));
+            pendingEmail = email;
+            $('otpSub').textContent = 'Enter the code we sent to ' + email + '.';
+            showAuthView('otpView');
+            showMsg($('authMsg'), 'success', r.text);
+        } catch (err) {
+            showMsg($('authMsg'), 'error', err.message);
+        } finally {
+            $('signupBtn').disabled = false;
+        }
+    });
+
+    $('otpView').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        $('otpBtn').disabled = true;
+        try {
+            const res = await fetch('/api/auth/verify-otp', {
+                method: 'POST',
+                body: new URLSearchParams({ email: pendingEmail, otp: $('otpInput').value.trim() })
+            });
+            const r = await readResponse(res);
+            if (!r.ok) throw new Error(errorFrom(r));
+            $('loginEmail').value = pendingEmail;
+            $('otpInput').value = '';
+            showAuthView('loginView');
+            showMsg($('authMsg'), 'success', r.text);
+        } catch (err) {
+            showMsg($('authMsg'), 'error', err.message);
+        } finally {
+            $('otpBtn').disabled = false;
+        }
+    });
+
+    $('loginView').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = $('loginEmail').value.trim();
+        $('loginBtn').disabled = true;
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                body: new URLSearchParams({ email: email, password: $('loginPassword').value })
+            });
+            const r = await readResponse(res);
+            if (!r.ok) throw new Error(errorFrom(r));
+            try { localStorage.setItem(SESSION_KEY, email); } catch (x) { }
+            $('loginPassword').value = '';
+            showApp(email);
+        } catch (err) {
+            showMsg($('authMsg'), 'error', err.message);
+        } finally {
+            $('loginBtn').disabled = false;
+        }
+    });
+
+    $('logoutBtn').onclick = () => {
+        try { localStorage.removeItem(SESSION_KEY); } catch (x) { }
+        showAuth();
+    };
+
+    /* ---------- file input ---------- */
+    $('resumeFile').addEventListener('change', () => {
+        const f = $('resumeFile').files[0];
+        if (f) {
+            $('fileName').textContent = f.name;
+            $('dropText').textContent = 'Selected file:';
+        }
+    });
+    $('dropzone').addEventListener('dragover', (e) => { e.preventDefault(); $('dropzone').classList.add('dragover'); });
+    $('dropzone').addEventListener('dragleave', () => $('dropzone').classList.remove('dragover'));
+    $('dropzone').addEventListener('drop', () => $('dropzone').classList.remove('dragover'));
+
+    /* ---------- rendering ---------- */
+    function showPanel(id) {
+        ['emptyState', 'loadingState', 'resultsWrap'].forEach(p => $(p).classList.toggle('hidden', p !== id));
+    }
+
+    function renderChips(containerId, items, type) {
+        const box = $(containerId);
+        box.innerHTML = '';
+        if (!items || items.length === 0) {
+            const none = document.createElement('span');
+            none.style.color = 'var(--muted)';
+            none.textContent = 'None found.';
+            box.appendChild(none);
+            return;
+        }
+        items.forEach(s => {
+            const chip = document.createElement('span');
+            chip.className = 'chip ' + type;
+            chip.textContent = s;
+            box.appendChild(chip);
+        });
+    }
+
+    function renderAnalyze(d) {
+        const circumference = 314;
+        const score = d.finalScore;
+        const fill = $('gaugeFill');
+        fill.style.strokeDashoffset = circumference - (circumference * score / 100);
+        $('scoreNumber').textContent = score + '%';
+
+        let label, color;
+        if (score >= 75) { label = 'Strong match'; color = '#12b76a'; }
+        else if (score >= 45) { label = 'Partial match'; color = '#f79009'; }
+        else { label = 'Weak match'; color = '#f04438'; }
+        fill.style.stroke = color;
+        $('verdict').textContent = label;
+
+        $('ruleScore').textContent = 'Rule-based: ' + d.ruleBasedScore + '%';
+        $('aiScore').textContent = 'AI: ' + d.aiScore + '%';
+        renderChips('matchedChips', d.matchedSkills, 'matched');
+        renderChips('missingChips', d.missingSkills, 'missing');
+        $('feedbackText').textContent = d.summaryFeedback;
+    }
+
+    function renderBias(d) {
+        const box = $('biasContent');
+        box.innerHTML = '';
+
+        const banner = document.createElement('div');
+        banner.className = 'banner ' + (d.biasFlagged ? 'flagged' : 'fair');
+        const title = document.createElement('div');
+        title.textContent = d.biasFlagged ? 'Possible bias detected' : 'No bias detected';
+        const detail = document.createElement('div');
+        detail.className = 'detail';
+        detail.textContent = d.biasSummary;
+        banner.appendChild(title);
+        banner.appendChild(detail);
+        box.appendChild(banner);
+
+        // Short table: one row per check
+        const table = document.createElement('table');
+        const head = document.createElement('thead');
+        const headRow = document.createElement('tr');
+        ['Checked on', 'Result'].forEach(t => {
+            const th = document.createElement('th');
+            th.textContent = t;
+            headRow.appendChild(th);
+        });
+        head.appendChild(headRow);
+        table.appendChild(head);
+
+        const body = document.createElement('tbody');
+        (d.checks || []).forEach(c => {
+            const tr = document.createElement('tr');
+            const tdName = document.createElement('td');
+            tdName.textContent = c.attribute;
+            const tdResult = document.createElement('td');
+            if (c.flagged) {
+                tdResult.textContent = '⚠ Score changed by ' + c.scoreGap + ' points';
+                tdResult.style.color = '#b42318';
+            } else {
+                tdResult.textContent = '✔ No bias';
+                tdResult.style.color = '#027a48';
+            }
+            tdResult.style.fontWeight = '600';
+            tr.appendChild(tdName);
+            tr.appendChild(tdResult);
+            body.appendChild(tr);
+        });
+        table.appendChild(body);
+        box.appendChild(table);
+
+        // Dropdown with detailed scores (closed by default)
+        const details = document.createElement('details');
+        details.style.marginTop = '14px';
+        const summary = document.createElement('summary');
+        summary.textContent = 'View details';
+        summary.style.cursor = 'pointer';
+        summary.style.fontWeight = '600';
+        summary.style.color = '#155eef';
+        details.appendChild(summary);
+
+        const dTable = document.createElement('table');
+        dTable.style.marginTop = '10px';
+        const dHead = document.createElement('thead');
+        const dHeadRow = document.createElement('tr');
+        ['Checked on', 'Version tested', 'Match score'].forEach(t => {
+            const th = document.createElement('th');
+            th.textContent = t;
+            dHeadRow.appendChild(th);
+        });
+        dHead.appendChild(dHeadRow);
+        dTable.appendChild(dHead);
+
+        const dBody = document.createElement('tbody');
+        (d.checks || []).forEach(c => {
+            Object.entries(c.scoresByVariant || {}).forEach(([variant, score]) => {
+                const tr = document.createElement('tr');
+                [c.attribute, variant, score + '%'].forEach(t => {
+                    const td = document.createElement('td');
+                    td.textContent = t;
+                    tr.appendChild(td);
+                });
+                dBody.appendChild(tr);
+            });
+        });
+        dTable.appendChild(dBody);
+        details.appendChild(dTable);
+        box.appendChild(details);
+    }
+
+    function renderBiasError(message) {
+        const box = $('biasContent');
+        box.innerHTML = '';
+        const err = document.createElement('div');
+        err.className = 'msg error';
+        err.textContent = 'Bias check could not be completed: ' + message;
+        box.appendChild(err);
+    }
+
+    /* ---------- submit: one click runs both ---------- */
+    $('analyzeForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearMsg($('formMsg'));
+
+        const file = $('resumeFile').files[0];
+        const jd = $('jobDescription').value.trim();
+
+        if (!file || !jd) {
+            showMsg($('formMsg'), 'error', 'Both resume file and job description are required.');
+            return;
+        }
+        if (jd.length < 50) {
+            showMsg($('formMsg'), 'error', 'Job description seems too short. Please paste the complete job posting.');
+            return;
+        }
+
+        const analyzeData = new FormData();
+        analyzeData.append('resume', file);
+        analyzeData.append('jobDescription', jd);
+
+        const biasData = new FormData();
+        biasData.append('resume', file);
+        biasData.append('jobDescription', jd);
+        biasData.append('candidateNames', BIAS_TEST_NAMES);
+
+        showPanel('loadingState');
+        $('submitBtn').disabled = true;
+
+        try {
+            const [analyzeRes, biasRes] = await Promise.allSettled([
+                fetch('/api/analyze', { method: 'POST', body: analyzeData }).then(readResponse),
+                fetch('/api/analyze-bias', { method: 'POST', body: biasData }).then(readResponse)
+            ]);
+
+            if (analyzeRes.status !== 'fulfilled' || !analyzeRes.value.ok) {
+                const msg = analyzeRes.status === 'fulfilled'
+                    ? errorFrom(analyzeRes.value) : analyzeRes.reason.message;
+                throw new Error(msg);
+            }
+
+            renderAnalyze(analyzeRes.value.data);
+
+            if (biasRes.status === 'fulfilled' && biasRes.value.ok) {
+                renderBias(biasRes.value.data);
+            } else {
+                const msg = biasRes.status === 'fulfilled'
+                    ? errorFrom(biasRes.value) : biasRes.reason.message;
+                renderBiasError(msg);
+            }
+
+            showPanel('resultsWrap');
+        } catch (err) {
+            showPanel('emptyState');
+            showMsg($('formMsg'), 'error', err.message);
+        } finally {
+            $('submitBtn').disabled = false;
+        }
+    });
+
+    /* ---------- start ---------- */
+    (function init() {
+        let saved = null;
+        try { saved = localStorage.getItem(SESSION_KEY); } catch (x) { }
+        if (saved) showApp(saved); else showAuth();
+    })();
+</script>
+
+</body>
+</html>
