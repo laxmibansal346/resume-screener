@@ -22,8 +22,10 @@ public class SkillExtractionService {
                 .modelName("openai/gpt-oss-120b")
                 .temperature(0.0)
                 .timeout(Duration.ofSeconds(60))
+                .maxRetries(0)
                 .build();
     }
+
     public List<String> extractSkills(String jobDescription) throws Exception {
         String prompt = buildPrompt(jobDescription);
 
@@ -32,7 +34,6 @@ public class SkillExtractionService {
 
         return objectMapper.readValue(cleanJson, objectMapper.getTypeFactory().constructCollectionType(List.class, String.class));
     }
-
 
     private String buildPrompt(String jobDescription) {
         return """

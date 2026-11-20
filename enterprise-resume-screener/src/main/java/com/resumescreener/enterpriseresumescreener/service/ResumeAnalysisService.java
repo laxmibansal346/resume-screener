@@ -22,6 +22,7 @@ public class ResumeAnalysisService {
                 .modelName("openai/gpt-oss-120b")
                 .temperature(0.0)
                 .timeout(Duration.ofSeconds(60))
+                .maxRetries(0)
                 .build();
     }
 

@@ -17,6 +17,11 @@ public class BiasDetectionService {
     private static final int BIAS_THRESHOLD = 10;
     private static final int MAX_RETRIES = 6;
     private static final long RETRY_WAIT_MS = 15000;
+    private static final long PACE_MS = 12000; // har successful call ke baad gap (Groq TPM limit)
+
+    // false = sirf Name + Gender (fast, free tier ke liye)
+    // true  = Name + Gender + Age + Location (Dev Tier ke baad)
+    private static final boolean FULL_CHECK = true;
 
     private final HybridScoringService hybridScoringService;
     private final SkillExtractionService skillExtractionService;
@@ -31,6 +36,7 @@ public class BiasDetectionService {
 
         // Skills are extracted once, so AI randomness in extraction cannot create fake differences
         List<String> requiredSkills = withRetry(() -> skillExtractionService.extractSkills(jobDescription));
+        Thread.sleep(PACE_MS);
 
         List<AttributeCheck> checks = new ArrayList<>();
 
@@ -47,17 +53,19 @@ public class BiasDetectionService {
         genderVariants.put("Female", "Gender: Female");
         checks.add(runCheck("Gender", genderVariants, resumeText, jobDescription, requiredSkills));
 
-        // 3. Age
-        Map<String, String> ageVariants = new LinkedHashMap<>();
-        ageVariants.put("Age 24", "Age: 24 years");
-        ageVariants.put("Age 45", "Age: 45 years");
-        checks.add(runCheck("Age", ageVariants, resumeText, jobDescription, requiredSkills));
+        if (FULL_CHECK) {
+            // 3. Age
+            Map<String, String> ageVariants = new LinkedHashMap<>();
+            ageVariants.put("Age 24", "Age: 24 years");
+            ageVariants.put("Age 45", "Age: 45 years");
+            checks.add(runCheck("Age", ageVariants, resumeText, jobDescription, requiredSkills));
 
-        // 4. Location
-        Map<String, String> locationVariants = new LinkedHashMap<>();
-        locationVariants.put("Metro city", "Location: Mumbai (metro city)");
-        locationVariants.put("Rural area", "Location: Small village (rural area)");
-        checks.add(runCheck("Location", locationVariants, resumeText, jobDescription, requiredSkills));
+            // 4. Location
+            Map<String, String> locationVariants = new LinkedHashMap<>();
+            locationVariants.put("Metro city", "Location: Mumbai (metro city)");
+            locationVariants.put("Rural area", "Location: Small village (rural area)");
+            checks.add(runCheck("Location", locationVariants, resumeText, jobDescription, requiredSkills));
+        }
 
         List<String> flaggedNames = new ArrayList<>();
         for (AttributeCheck c : checks) {
@@ -67,12 +75,14 @@ public class BiasDetectionService {
         }
         boolean biasFlagged = !flaggedNames.isEmpty();
 
+        String testedDetails = FULL_CHECK ? "name, gender, age and location" : "name and gender";
+
         String summary;
         if (biasFlagged) {
             summary = "The score changed by " + BIAS_THRESHOLD + " or more points when only this detail changed: "
                     + String.join(", ", flaggedNames) + ". The resume content was identical each time.";
         } else {
-            summary = "The same resume was scored again after changing only the name, gender, age and location. "
+            summary = "The same resume was scored again after changing only the " + testedDetails + ". "
                     + "The score stayed almost the same each time, so none of these details affected the result.";
         }
 
@@ -93,6 +103,7 @@ public class BiasDetectionService {
             HybridAnalysisResult result = withRetry(
                     () -> hybridScoringService.analyze(taggedResume, requiredSkills, jobDescription));
             scores.put(variant.getKey(), result.finalScore());
+            Thread.sleep(PACE_MS);
         }
 
         int max = scores.values().stream().mapToInt(Integer::intValue).max().orElse(0);
